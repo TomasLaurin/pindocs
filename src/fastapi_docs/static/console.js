@@ -511,35 +511,67 @@ function variableRow(name, value, kind, origin) {
     saveState(next);
   });
 
-  const action =
+  /* A pinned row needs one action — unpin already means "forget this". A
+   * captured row needs two: keep it (pin) or drop just this one, because a
+   * rail you can only empty wholesale fills up with everything you ever hit. */
+  const actions =
     kind === "pinned"
-      ? el("button", {
-          class: "pin",
-          type: "button",
-          text: "unpin",
-          title: "Stop overriding this name",
-          onclick: () => {
-            const pinnedNext = { ...STATE.pinned };
-            delete pinnedNext[name];
-            saveState({ ...STATE, pinned: pinnedNext });
-          },
-        })
-      : el("button", {
-          class: "pin",
-          type: "button",
-          text: "pin",
-          title: "Keep this value — responses will stop overwriting it",
-          onclick: () => saveState({ ...STATE, pinned: { ...STATE.pinned, [name]: value } }),
-        });
+      ? [
+          el("button", {
+            class: "pin",
+            type: "button",
+            text: "unpin",
+            title: "Stop overriding this name",
+            onclick: () => {
+              const pinnedNext = { ...STATE.pinned };
+              delete pinnedNext[name];
+              saveState({ ...STATE, pinned: pinnedNext });
+            },
+          }),
+        ]
+      : [
+          el("button", {
+            class: "pin",
+            type: "button",
+            text: "pin",
+            title: "Keep this value — responses will stop overwriting it",
+            onclick: () => saveState({ ...STATE, pinned: { ...STATE.pinned, [name]: value } }),
+          }),
+          el("button", {
+            class: "pin drop",
+            type: "button",
+            text: "✕",
+            title: "Delete this captured value",
+            onclick: () => {
+              const capturedNext = { ...STATE.captured };
+              delete capturedNext[name];
+              saveState({ ...STATE, captured: capturedNext });
+            },
+          }),
+        ];
 
   return el(
     "div",
     { class: "variable" },
     el("span", { class: "name", text: name, title: name }),
-    action,
+    el("span", { class: "row-actions" }, actions),
     input,
     origin ? el("span", { class: "meta", text: origin, title: origin }) : null,
   );
+}
+
+/* Native <dialog> rather than window.confirm: the system dialog cannot be
+ * styled, and a console asking its one destructive question in someone else's
+ * chrome would look broken. `returnValue` survives a previous close, so it is
+ * reset on the way in; Escape closes with it still empty, which reads as No. */
+function confirmDialog(message) {
+  const dialog = $("#confirm");
+  $("#confirm-message").textContent = message;
+  dialog.returnValue = "";
+  return new Promise((resolve) => {
+    dialog.addEventListener("close", () => resolve(dialog.returnValue === "confirm"), { once: true });
+    dialog.showModal();
+  });
 }
 
 /* ---------- boot ---------- */
@@ -567,7 +599,14 @@ async function boot() {
   $("#token").addEventListener("change", (event) => localStorage.setItem(TOKEN_KEY, event.target.value));
   $("#filter").addEventListener("input", (event) => renderNav(event.target.value));
   $("#capture").addEventListener("change", (event) => saveState({ ...STATE, capture: event.target.checked }));
-  $("#clear-captured").addEventListener("click", () => saveState({ ...STATE, captured: {} }));
+  $("#clear-captured").addEventListener("click", async () => {
+    const count = Object.keys(STATE.captured).length;
+    if (!count) return;
+    const what = count === 1 ? "the 1 captured value" : `all ${count} captured values`;
+    if (await confirmDialog(`Delete ${what}? Pinned values stay.`)) {
+      saveState({ ...STATE, captured: {} });
+    }
+  });
   $("#add-variable").addEventListener("submit", (event) => {
     event.preventDefault();
     const form = new FormData(event.target);

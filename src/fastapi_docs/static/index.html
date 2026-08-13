@@ -49,6 +49,16 @@
       </aside>
     </div>
 
+    <dialog id="confirm">
+      <form method="dialog">
+        <p id="confirm-message"></p>
+        <div class="actions">
+          <button value="" class="ghost" type="submit">Cancel</button>
+          <button value="confirm" class="danger" type="submit">Clear captured</button>
+        </div>
+      </form>
+    </dialog>
+
     <script>
       window.FASTAPI_DOCS = { base: "__FASTAPI_DOCS_BASE__" };
     </script>

@@ -67,6 +67,21 @@ def test_a_response_becomes_a_variable_the_next_request_can_use(app) -> None:
     assert client.get("/myapp/state").json()["captured"]["run_id"]["value"] == "run_9"
 
 
+def test_deleting_one_captured_value_keeps_the_rest(app) -> None:
+    """The rail's per-item delete writes the state back minus exactly one name."""
+    client = TestClient(app)
+    client.post("/myapp/capture", json={"operation": "POST /v1/runs", "path": "/v1/runs", "body": {"id": "run_9"}})
+    client.post("/myapp/capture", json={"operation": "GET /v1/models", "path": "/v1/models", "body": {"id": "model_1"}})
+
+    state = client.get("/myapp/state").json()
+    del state["captured"]["run_id"]
+    saved = client.put("/myapp/state", json=state).json()
+
+    assert "run_id" not in saved["captured"]
+    assert saved["captured"]["model_id"]["value"] == "model_1"
+    assert client.get("/myapp/state").json()["captured"].keys() == {"model_id"}
+
+
 def test_capture_off_means_nothing_is_written(app) -> None:
     client = TestClient(app)
     client.put("/myapp/state", json={"capture": False})
