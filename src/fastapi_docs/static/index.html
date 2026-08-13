@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>__FASTAPI_DOCS_TITLE__</title>
+    <link rel="stylesheet" href="__FASTAPI_DOCS_BASE__/assets/console.css" />
+    __FASTAPI_DOCS_THEME__
+  </head>
+  <body>
+    <div id="layout">
+      <aside id="sidebar">
+        <header>
+          <h1 id="title">__FASTAPI_DOCS_TITLE__</h1>
+          <input id="filter" type="search" placeholder="Filter operations…" autocomplete="off" spellcheck="false" />
+        </header>
+        <nav id="nav" aria-label="Operations"></nav>
+      </aside>
+
+      <main id="main">
+        <div id="operation">
+          <p class="placeholder">Pick an operation from the left.</p>
+        </div>
+      </main>
+
+      <aside id="rail">
+        <section>
+          <h2>Authorization</h2>
+          <input id="token" type="password" placeholder="Bearer token" autocomplete="off" spellcheck="false" />
+          <p class="hint">Kept in this browser only — never written to the state file.</p>
+        </section>
+
+        <section>
+          <h2>
+            Variables
+            <label class="toggle" title="Store ids returned by every response">
+              <input id="capture" type="checkbox" />
+              <span>capture</span>
+            </label>
+          </h2>
+          <div id="variables"></div>
+          <form id="add-variable">
+            <input name="name" placeholder="name" autocomplete="off" spellcheck="false" required />
+            <input name="value" placeholder="value" autocomplete="off" spellcheck="false" />
+            <button type="submit" title="Pin a variable">Pin</button>
+          </form>
+          <button id="clear-captured" class="ghost">Clear captured</button>
+        </section>
+      </aside>
+    </div>
+
+    <script>
+      window.FASTAPI_DOCS = { base: "__FASTAPI_DOCS_BASE__" };
+    </script>
+    <script src="__FASTAPI_DOCS_BASE__/assets/console.js"></script>
+  </body>
+</html>

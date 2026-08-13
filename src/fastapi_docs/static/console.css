@@ -1,0 +1,710 @@
+/* The default theme is a dark, dense application palette: a neutral ramp with
+ * half-steps, semantic content/line/surface/control tiers layered on top of it,
+ * and status colour carried by markers rather than by filled backgrounds.
+ *
+ * Every value below is a `--fd-` custom property, so a host application can
+ * restyle the console without forking it — pass its own tokens through
+ * `mount(theme=...)` and only the variables it names change.
+ */
+
+:root {
+  /* neutral ramp */
+  --fd-n100: #f5f5f5;
+  --fd-n200: #e5e5e5;
+  --fd-n300: #d4d4d4;
+  --fd-n400: #a3a3a3;
+  --fd-n500: #737373;
+  --fd-n550: #616161;
+  --fd-n600: #525252;
+  --fd-n650: #494949;
+  --fd-n700: #404040;
+  --fd-n750: #353535;
+  --fd-n775: #303030;
+  --fd-n800: #2b2b2b;
+  --fd-n850: #242424;
+  --fd-n875: #202020;
+  --fd-n900: #1b1b1b;
+  --fd-n950: #111111;
+
+  /* surfaces */
+  --fd-background: #1c1c1c;
+  --fd-shell: var(--fd-n875);
+  --fd-surface: var(--fd-n800);
+  --fd-surface-raised: var(--fd-n850);
+  --fd-surface-recessed: var(--fd-n900);
+  --fd-surface-hover: var(--fd-n775);
+  --fd-surface-active: var(--fd-n750);
+  --fd-control: var(--fd-n700);
+  --fd-control-hover: var(--fd-n600);
+
+  /* content */
+  --fd-content-strong: #ffffff;
+  --fd-content: var(--fd-n100);
+  --fd-content-medium: var(--fd-n200);
+  --fd-content-soft: var(--fd-n300);
+  --fd-content-muted: var(--fd-n400);
+  --fd-content-subtle: var(--fd-n500);
+
+  /* lines */
+  --fd-line-subtle: var(--fd-n800);
+  --fd-line-muted: var(--fd-n750);
+  --fd-line: var(--fd-n700);
+  --fd-line-accent: var(--fd-n650);
+  --fd-line-strong: var(--fd-n600);
+
+  /* accent + status */
+  --fd-primary: #2563eb;
+  --fd-primary-hover: #1d4ed8;
+  --fd-primary-soft: #60a5fa;
+  --fd-on-primary: #ffffff;
+  --fd-success: #4ade80;
+  --fd-success-line: #15803d;
+  --fd-success-surface: #052e16;
+  --fd-danger: #f87171;
+  --fd-danger-line: #b91c1c;
+  --fd-danger-surface: #450a0a;
+  --fd-warning: #fb923c;
+
+  /* type scale */
+  --fd-text-xs: 0.6875rem;
+  --fd-text-sm: 0.75rem;
+  --fd-text-base: 0.8125rem;
+  --fd-text-lg: 0.9375rem;
+  --fd-text-xl: 1.125rem;
+
+  /* radii */
+  --fd-radius-sm: 0.375rem;
+  --fd-radius-md: 0.5rem;
+  --fd-radius-lg: 0.625rem;
+
+  --fd-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --fd-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--fd-background);
+  color: var(--fd-content-soft);
+  font-family: var(--fd-sans);
+  font-size: var(--fd-text-base);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+::selection {
+  background: color-mix(in srgb, var(--fd-primary) 40%, transparent);
+  color: var(--fd-content-strong);
+}
+
+/* Scrollbars are part of the surface, not the browser's idea of one. */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--fd-n700) transparent;
+}
+
+*::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+*::-webkit-scrollbar-thumb {
+  background: var(--fd-n700);
+  border: 3px solid transparent;
+  background-clip: padding-box;
+  border-radius: 999px;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: var(--fd-n600);
+  background-clip: padding-box;
+}
+
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+#layout {
+  display: grid;
+  grid-template-columns: 288px minmax(0, 1fr) 320px;
+  height: 100vh;
+}
+
+/* ---------- controls ---------- */
+
+input[type="text"],
+input[type="search"],
+input[type="password"],
+textarea {
+  width: 100%;
+  height: 2rem;
+  padding: 0.25rem 0.5rem;
+  border: 1px solid var(--fd-line-muted);
+  border-radius: var(--fd-radius-md);
+  background: var(--fd-surface-raised);
+  color: var(--fd-content-strong);
+  font-family: inherit;
+  font-size: var(--fd-text-sm);
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: var(--fd-content-muted);
+}
+
+/* The focus ring sits inside the control so nothing reflows when it appears. */
+input:focus,
+textarea:focus {
+  border-color: transparent;
+  outline: none;
+  box-shadow: inset 0 0 0 1px var(--fd-primary);
+}
+
+button {
+  display: inline-flex;
+  height: 1.75rem;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.25rem 0.5rem;
+  border: 1px solid transparent;
+  border-radius: var(--fd-radius-md);
+  background: var(--fd-control);
+  color: var(--fd-content-strong);
+  font-family: inherit;
+  font-size: var(--fd-text-sm);
+  font-weight: 500;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background-color 120ms ease, color 120ms ease;
+}
+
+button:hover {
+  background: var(--fd-control-hover);
+}
+
+button:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 1px var(--fd-primary);
+}
+
+button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+button.primary {
+  background: var(--fd-primary);
+  color: var(--fd-on-primary);
+}
+
+button.primary:hover {
+  background: var(--fd-primary-hover);
+}
+
+button.ghost {
+  background: transparent;
+  color: var(--fd-content-soft);
+}
+
+button.ghost:hover {
+  background: var(--fd-surface-hover);
+  color: var(--fd-content-strong);
+}
+
+input[type="checkbox"] {
+  width: 0.875rem;
+  height: 0.875rem;
+  margin: 0;
+  accent-color: var(--fd-primary);
+  cursor: pointer;
+}
+
+/* ---------- sidebar ---------- */
+
+#sidebar {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  border-right: 1px solid var(--fd-line-subtle);
+  background: var(--fd-shell);
+}
+
+#sidebar header {
+  padding: 0.875rem 0.875rem 0.75rem;
+  border-bottom: 1px solid var(--fd-line-subtle);
+}
+
+#title {
+  margin: 0 0 0.625rem;
+  color: var(--fd-content-strong);
+  font-size: var(--fd-text-base);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+#nav {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0.5rem 0 3rem;
+}
+
+summary {
+  cursor: pointer;
+  list-style: none;
+}
+
+summary::-webkit-details-marker {
+  display: none;
+}
+
+/* A chevron drawn from borders — crisper at 11px than any glyph, and it does
+ * not shift when the surrounding font changes. */
+.group > summary::before,
+.tag > summary::before {
+  content: "";
+  display: inline-block;
+  width: 0.3125rem;
+  height: 0.3125rem;
+  margin-right: 0.5rem;
+  border-right: 1.5px solid var(--fd-content-subtle);
+  border-bottom: 1.5px solid var(--fd-content-subtle);
+  transform: translateY(-1px) rotate(-45deg);
+  transition: transform 140ms ease;
+}
+
+.group[open] > summary::before,
+.tag[open] > summary::before {
+  transform: translateY(-2px) rotate(45deg);
+}
+
+.group > summary:hover::before,
+.tag > summary:hover::before {
+  border-color: var(--fd-content-muted);
+}
+
+.group-name {
+  display: flex;
+  align-items: center;
+  padding: 0.875rem 0.875rem 0.375rem;
+  color: var(--fd-content-subtle);
+  font-size: var(--fd-text-xs);
+  font-weight: 600;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+.group > summary:hover {
+  color: var(--fd-content-muted);
+}
+
+.tag > summary {
+  display: flex;
+  align-items: center;
+  padding: 0.3125rem 0.875rem;
+  color: var(--fd-content-soft);
+  font-size: var(--fd-text-sm);
+  font-weight: 500;
+}
+
+.tag > summary:hover {
+  color: var(--fd-content-strong);
+}
+
+.op {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  width: 100%;
+  height: 1.625rem;
+  padding: 0 0.875rem 0 1.75rem;
+  border: 0;
+  border-radius: 0;
+  background: none;
+  color: var(--fd-content-muted);
+  font-weight: 400;
+  text-align: left;
+}
+
+.op:hover {
+  background: var(--fd-surface-hover);
+  color: var(--fd-content-medium);
+}
+
+.op[aria-current="true"] {
+  background: var(--fd-surface-active);
+  color: var(--fd-content-strong);
+  box-shadow: inset 2px 0 0 var(--fd-primary);
+}
+
+.op:focus-visible {
+  box-shadow: inset 0 0 0 1px var(--fd-primary);
+}
+
+.op .path {
+  flex: 1;
+  min-width: 0;
+  font-family: var(--fd-mono);
+  font-size: var(--fd-text-sm);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.method {
+  flex: none;
+  width: 2.75rem;
+  font-family: var(--fd-mono);
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.method-get { color: var(--fd-success); }
+.method-post { color: var(--fd-primary-soft); }
+.method-put,
+.method-patch { color: var(--fd-warning); }
+.method-delete { color: var(--fd-danger); }
+.method-head,
+.method-options { color: var(--fd-content-subtle); }
+
+/* ---------- operation ---------- */
+
+#main {
+  overflow-y: auto;
+  min-width: 0;
+}
+
+#operation {
+  max-width: 60rem;
+  padding: 1.75rem 2rem 6rem;
+}
+
+.placeholder {
+  color: var(--fd-content-subtle);
+}
+
+.op-head {
+  display: flex;
+  gap: 0.625rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+/* The method reads as a chip here, the way a status badge does elsewhere. */
+.op-head .method {
+  display: inline-flex;
+  align-items: center;
+  width: auto;
+  height: 1.25rem;
+  padding: 0 0.375rem;
+  border: 1px solid var(--fd-line-accent);
+  border-radius: var(--fd-radius-sm);
+  background: var(--fd-surface);
+  font-size: var(--fd-text-xs);
+}
+
+.op-head .url {
+  font-family: var(--fd-mono);
+  font-size: var(--fd-text-base);
+  color: var(--fd-content-medium);
+  word-break: break-all;
+}
+
+.op-summary {
+  margin: 0.625rem 0 0;
+  color: var(--fd-content-strong);
+  font-size: var(--fd-text-xl);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.op-description {
+  margin: 0.375rem 0 0;
+  color: var(--fd-content-muted);
+  font-size: var(--fd-text-sm);
+  white-space: pre-wrap;
+}
+
+h3 {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin: 1.75rem 0 0.5rem;
+  color: var(--fd-content-subtle);
+  font-size: var(--fd-text-xs);
+  font-weight: 600;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+h3::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--fd-line-subtle);
+}
+
+.field {
+  display: grid;
+  grid-template-columns: 11.5rem minmax(0, 1fr);
+  gap: 0.75rem;
+  align-items: start;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid var(--fd-line-subtle);
+}
+
+.field label {
+  padding-top: 0.4375rem;
+  color: var(--fd-content-medium);
+  font-family: var(--fd-mono);
+  font-size: var(--fd-text-sm);
+  overflow-wrap: anywhere;
+}
+
+.field .req {
+  color: var(--fd-danger);
+}
+
+.field .where {
+  display: inline-block;
+  margin-left: 0.375rem;
+  padding: 0 0.25rem;
+  border: 1px solid var(--fd-line-subtle);
+  border-radius: var(--fd-radius-sm);
+  background: var(--fd-surface);
+  color: var(--fd-content-subtle);
+  font-family: var(--fd-sans);
+  font-size: var(--fd-text-xs);
+  vertical-align: 1px;
+}
+
+textarea {
+  height: auto;
+  min-height: 12rem;
+  padding: 0.625rem 0.75rem;
+  font-family: var(--fd-mono);
+  line-height: 1.6;
+  resize: vertical;
+  tab-size: 2;
+}
+
+.source {
+  display: block;
+  min-height: 0.9375rem;
+  margin-top: 0.25rem;
+  color: var(--fd-content-subtle);
+  font-family: var(--fd-mono);
+  font-size: var(--fd-text-xs);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.source-pinned { color: var(--fd-primary-soft); }
+.source-captured { color: var(--fd-success); }
+
+.actions {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+  margin-top: 1.25rem;
+}
+
+.hint {
+  color: var(--fd-content-subtle);
+  font-size: var(--fd-text-sm);
+}
+
+/* ---------- response ---------- */
+
+.response {
+  margin-top: 1.5rem;
+  border: 1px solid var(--fd-line-subtle);
+  border-radius: var(--fd-radius-lg);
+  background: var(--fd-surface-recessed);
+  overflow: hidden;
+}
+
+.response-head {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  padding: 0.5rem 0.875rem;
+  border-bottom: 1px solid var(--fd-line-subtle);
+  background: var(--fd-surface-raised);
+  color: var(--fd-content-muted);
+  font-family: var(--fd-mono);
+  font-size: var(--fd-text-sm);
+}
+
+.status-ok,
+.status-bad {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4375rem;
+  font-weight: 600;
+}
+
+.status-ok::before,
+.status-bad::before {
+  content: "";
+  width: 0.375rem;
+  height: 0.375rem;
+  border-radius: 999px;
+  background: currentColor;
+}
+
+.status-ok { color: var(--fd-success); }
+.status-bad { color: var(--fd-danger); }
+
+.response pre {
+  margin: 0;
+  padding: 0.875rem;
+  max-height: 30rem;
+  overflow: auto;
+  color: var(--fd-content-medium);
+  font-family: var(--fd-mono);
+  font-size: var(--fd-text-sm);
+  line-height: 1.6;
+}
+
+.captured-note {
+  display: flex;
+  align-items: center;
+  gap: 0.4375rem;
+  padding: 0.5rem 0.875rem;
+  border-top: 1px solid var(--fd-success-line);
+  background: var(--fd-success-surface);
+  color: var(--fd-success);
+  font-family: var(--fd-mono);
+  font-size: var(--fd-text-sm);
+}
+
+/* ---------- rail ---------- */
+
+#rail {
+  overflow-y: auto;
+  padding: 0.875rem;
+  border-left: 1px solid var(--fd-line-subtle);
+  background: var(--fd-shell);
+}
+
+#rail section {
+  margin-bottom: 1.75rem;
+}
+
+#rail h2 {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin: 0 0 0.625rem;
+  color: var(--fd-content-subtle);
+  font-size: var(--fd-text-xs);
+  font-weight: 600;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+.toggle {
+  display: flex;
+  gap: 0.375rem;
+  align-items: center;
+  color: var(--fd-content-muted);
+  font-weight: 500;
+  letter-spacing: 0;
+  text-transform: none;
+  cursor: pointer;
+}
+
+.toggle:hover {
+  color: var(--fd-content-medium);
+}
+
+.variable {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.25rem 0.5rem;
+  padding: 0.5rem;
+  margin-bottom: 0.375rem;
+  border: 1px solid var(--fd-line-subtle);
+  border-radius: var(--fd-radius-md);
+  background: var(--fd-surface-raised);
+}
+
+.variable .name {
+  align-self: center;
+  color: var(--fd-content-medium);
+  font-family: var(--fd-mono);
+  font-size: var(--fd-text-sm);
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.variable .value {
+  grid-column: 1 / -1;
+  height: 1.75rem;
+  background: var(--fd-surface-recessed);
+  font-family: var(--fd-mono);
+}
+
+.variable .meta {
+  grid-column: 1 / -1;
+  color: var(--fd-content-subtle);
+  font-family: var(--fd-mono);
+  font-size: var(--fd-text-xs);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.variable .pin {
+  height: 1.375rem;
+  padding: 0 0.375rem;
+  background: transparent;
+  color: var(--fd-content-subtle);
+  font-size: var(--fd-text-xs);
+}
+
+.variable .pin:hover {
+  background: var(--fd-surface-hover);
+  color: var(--fd-content-strong);
+}
+
+#add-variable {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
+  gap: 0.375rem;
+  margin-top: 0.75rem;
+}
+
+#clear-captured {
+  width: 100%;
+  margin-top: 0.5rem;
+}
+
+.empty-note {
+  margin: 0;
+  color: var(--fd-content-subtle);
+  font-size: var(--fd-text-sm);
+}
+
+@media (max-width: 1180px) {
+  #layout {
+    grid-template-columns: 256px minmax(0, 1fr);
+  }
+  #rail {
+    display: none;
+  }
+}

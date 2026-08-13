@@ -1,0 +1,13 @@
+__pycache__/
+*.py[cod]
+.venv/
+dist/
+build/
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+.DS_Store
+
+# The console's own state. Delete this line if your team wants to share pinned
+# values — that is what the file is for.
+.fastapi-docs.json
