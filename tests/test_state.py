@@ -2,7 +2,7 @@
 
 import json
 
-from fastapi_docs.state import StateStore
+from pindocs.state import StateStore
 
 
 def store(tmp_path) -> StateStore:

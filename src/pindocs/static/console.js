@@ -7,10 +7,10 @@
  * you are debugging is the real request, not a proxy's impression of one.
  */
 
-const BASE = window.FASTAPI_DOCS.base;
+const BASE = window.PINDOCS.base;
 const METHODS = ["get", "post", "put", "patch", "delete", "head", "options"];
-const TOKEN_KEY = `fastapi-docs:token:${BASE}`;
-const COLLAPSED_KEY = `fastapi-docs:collapsed:${BASE}`;
+const TOKEN_KEY = `pindocs:token:${BASE}`;
+const COLLAPSED_KEY = `pindocs:collapsed:${BASE}`;
 
 /* Tags open by default — a console that greets you with nothing but tag names
  * has hidden the only thing you came for. What you fold away is remembered. */

@@ -1,7 +1,7 @@
 """Attaching the console to an app.
 
-    import fastapi_docs
-    fastapi_docs.mount(app, path="/myapp")
+    import pindocs
+    pindocs.mount(app, path="/myapp")
 
 Everything the console needs is served from that one prefix, and the requests it
 sends go straight from the browser to the app's own routes. That is the whole
@@ -23,18 +23,18 @@ from typing import Any
 from fastapi import APIRouter, FastAPI, Request
 from fastapi.responses import HTMLResponse, JSONResponse, Response
 
-from fastapi_docs.capture import parameter_names, variables_from_response
-from fastapi_docs.groups import TagGroup, resolve_groups
-from fastapi_docs.state import StateStore
+from pindocs.capture import parameter_names, variables_from_response
+from pindocs.groups import TagGroup, resolve_groups
+from pindocs.state import StateStore
 
-DEFAULT_PATH = "/console"
-DEFAULT_STATE_FILE = ".fastapi-docs.json"
+DEFAULT_PATH = "/pindocs"
+DEFAULT_STATE_FILE = ".pindocs.json"
 
 _ASSETS = {"console.js", "console.css"}
 
 
 def _asset(name: str) -> str:
-    return resources.files("fastapi_docs").joinpath("static", name).read_text(encoding="utf-8")
+    return resources.files("pindocs").joinpath("static", name).read_text(encoding="utf-8")
 
 
 def mount(
@@ -56,15 +56,15 @@ def mount(
 
     ``theme`` is CSS appended after the console's own, for a host application
     that wants the console to look like the rest of it. Every colour, size and
-    radius is a ``--fd-`` custom property, so restyling is a block of variables
+    radius is a ``--pd-`` custom property, so restyling is a block of variables
     rather than a fork:
 
-        fastapi_docs.mount(app, theme=":root { --fd-primary: #7c3aed }")
+        pindocs.mount(app, theme=":root { --pd-primary: #7c3aed }")
 
     ``enabled=False`` makes this a no-op, so the call can stay unconditional at
     the call site and the decision can live in settings:
 
-        fastapi_docs.mount(app, enabled=not settings.is_production)
+        pindocs.mount(app, enabled=not settings.is_production)
     """
     if not enabled:
         return
@@ -76,9 +76,9 @@ def mount(
     @router.get(prefix, include_in_schema=False)
     async def console() -> HTMLResponse:
         page = _asset("index.html")
-        page = page.replace("__FASTAPI_DOCS_BASE__", prefix)
-        page = page.replace("__FASTAPI_DOCS_TITLE__", title or app.title or "API console")
-        page = page.replace("__FASTAPI_DOCS_THEME__", f"<style>{theme}</style>" if theme else "")
+        page = page.replace("__PINDOCS_BASE__", prefix)
+        page = page.replace("__PINDOCS_TITLE__", title or app.title or "API console")
+        page = page.replace("__PINDOCS_THEME__", f"<style>{theme}</style>" if theme else "")
         return HTMLResponse(page, headers={"cache-control": "no-store"})
 
     @router.get(prefix + "/assets/{name}", include_in_schema=False)

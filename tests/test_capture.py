@@ -1,6 +1,6 @@
 """Naming is the whole problem: a bare ``id`` is useless two requests later."""
 
-from fastapi_docs.capture import parameter_names, resource_from_path, singular, variables_from_response
+from pindocs.capture import parameter_names, resource_from_path, singular, variables_from_response
 
 
 def test_a_bare_id_is_named_after_the_collection_it_came_from() -> None:

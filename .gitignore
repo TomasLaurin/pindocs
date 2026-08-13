@@ -10,4 +10,4 @@ build/
 
 # The console's own state. Delete this line if your team wants to share pinned
 # values — that is what the file is for.
-.fastapi-docs.json
+.pindocs.json

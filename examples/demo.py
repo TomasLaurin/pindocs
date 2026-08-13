@@ -1,7 +1,7 @@
 """A small API that shows what the console is for.
 
     uv run uvicorn examples.demo:app --reload
-    open http://localhost:8000/myapp
+    open http://localhost:8000/pindocs
 
 Create a run, and watch ``run_id`` appear in the rail — every operation that
 takes one is pre-filled from then on, including after you restart the server.
@@ -14,8 +14,8 @@ from uuid import uuid4
 from fastapi import FastAPI
 from pydantic import BaseModel
 
-import fastapi_docs
-from fastapi_docs import TagGroup
+import pindocs
+from pindocs import TagGroup
 
 app = FastAPI(title="Demo API")
 
@@ -71,8 +71,7 @@ async def health() -> dict[str, str]:
     return {"status": "ok"}
 
 
-fastapi_docs.mount(
+pindocs.mount(
     app,
-    path="/myapp",
     groups=[TagGroup("Lifecycle", ["runs"]), TagGroup("Registry", ["models"]), TagGroup("Account", ["workspaces"])],
 )

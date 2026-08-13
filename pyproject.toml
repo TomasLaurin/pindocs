@@ -3,14 +3,14 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "fastapi-docs"
+name = "pindocs"
 version = "0.1.0"
-description = "A grouped, try-it-out API console for FastAPI, with values that outlive restarts."
+description = "A grouped, try-it-out API console for FastAPI, with pinned values that outlive restarts."
 readme = "README.md"
 requires-python = ">=3.11"
 license = { text = "MIT" }
 authors = [{ name = "Tomas Laurin" }]
-keywords = ["fastapi", "openapi", "documentation", "api-console", "swagger"]
+keywords = ["fastapi", "openapi", "documentation", "api-console", "swagger", "pindocs"]
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Framework :: FastAPI",
@@ -24,14 +24,14 @@ classifiers = [
 dependencies = ["fastapi>=0.100"]
 
 [project.urls]
-Homepage = "https://github.com/TomasLaurin/fastapi-docs"
-Issues = "https://github.com/TomasLaurin/fastapi-docs/issues"
+Homepage = "https://github.com/TomasLaurin/fastapi_docs"
+Issues = "https://github.com/TomasLaurin/fastapi_docs/issues"
 
 [dependency-groups]
 dev = ["pytest>=8.0", "httpx>=0.27", "ruff>=0.6", "uvicorn>=0.30"]
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/fastapi_docs"]
+packages = ["src/pindocs"]
 
 [tool.hatch.build.targets.sdist]
 include = ["src", "tests", "README.md", "LICENSE"]

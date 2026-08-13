@@ -1,6 +1,6 @@
 """The sidebar is built from tags, and the failure that matters is silent."""
 
-from fastapi_docs.groups import UNGROUPED, TagGroup, resolve_groups, tags_in_use
+from pindocs.groups import UNGROUPED, TagGroup, resolve_groups, tags_in_use
 
 
 def schema(*tags: str, declared: list[dict] | None = None, extension: list[dict] | None = None) -> dict:

@@ -2,7 +2,7 @@
 
 OpenAPI keeps ``tags`` flat, so any nesting a reader sees has to be declared
 somewhere else. Three places declare it, and they are read in order of how
-deliberate they are: what the caller passed to :func:`~fastapi_docs.mount`, then
+deliberate they are: what the caller passed to :func:`~pindocs.mount`, then
 the ``x-tagGroups`` extension, then OpenAPI 3.2's ``parent`` field.
 
 Whatever the source, one rule holds: **a tag no group claims is not dropped.**

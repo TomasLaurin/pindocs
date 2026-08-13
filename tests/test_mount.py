@@ -4,8 +4,8 @@ import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
-import fastapi_docs
-from fastapi_docs import TagGroup
+import pindocs
+from pindocs import TagGroup
 
 
 @pytest.fixture
@@ -20,7 +20,7 @@ def app(tmp_path) -> FastAPI:
     async def list_models() -> list:
         return []
 
-    fastapi_docs.mount(
+    pindocs.mount(
         application,
         path="/myapp",
         groups=[TagGroup("Lifecycle", ["runs"]), TagGroup("Registry", ["models"])],
@@ -96,13 +96,20 @@ def test_pinned_values_survive_a_restart(app, tmp_path) -> None:
 
     # A brand new app object on the same state file is the restart.
     restarted = FastAPI()
-    fastapi_docs.mount(restarted, path="/myapp", state_file=tmp_path / "state.json")
+    pindocs.mount(restarted, path="/myapp", state_file=tmp_path / "state.json")
 
     assert TestClient(restarted).get("/myapp/state").json()["pinned"] == {"workspace_id": "ws_1"}
 
 
+def test_the_default_path_is_pindocs(tmp_path) -> None:
+    application = FastAPI()
+    pindocs.mount(application, state_file=tmp_path / "state.json")
+
+    assert TestClient(application).get("/pindocs").status_code == 200
+
+
 def test_disabled_mounts_nothing(tmp_path) -> None:
     application = FastAPI()
-    fastapi_docs.mount(application, path="/myapp", enabled=False, state_file=tmp_path / "state.json")
+    pindocs.mount(application, path="/myapp", enabled=False, state_file=tmp_path / "state.json")
 
     assert TestClient(application).get("/myapp").status_code == 404
