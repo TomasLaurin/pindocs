@@ -1,0 +1,24 @@
+# Publishes to PyPI on every v* tag, via PyPI trusted publishing — no API token
+# lives in this repository. One-time setup on pypi.org before the first tag:
+# project "pindocs" → add a trusted publisher for TomasLaurin/fastapi_docs,
+# workflow publish.yml, environment pypi (https://docs.pypi.org/trusted-publishers/).
+name: publish
+
+on:
+  push:
+    tags: ["v*"]
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    environment: pypi
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+      - run: uv sync --group dev
+      - run: uv run pytest
+      - run: uv run ruff check src tests examples
+      - run: uv build
+      - run: uv publish
