@@ -11,6 +11,10 @@ const BASE = window.PINDOCS.base;
 const METHODS = ["get", "post", "put", "patch", "delete", "head", "options"];
 const TOKEN_KEY = `pindocs:token:${BASE}`;
 const COLLAPSED_KEY = `pindocs:collapsed:${BASE}`;
+const SIDEBAR_KEY = `pindocs:sidebar:${BASE}`;
+const SIDEBAR_MIN = 208; // narrower and the method column crowds the path
+const SIDEBAR_CAP = 880;
+const MAIN_MIN = 420; // the request pane's share, however wide the nav gets
 
 /* Tags open by default — a console that greets you with nothing but tag names
  * has hidden the only thing you came for. What you fold away is remembered. */
@@ -282,6 +286,100 @@ function select(op) {
   location.hash = encodeURIComponent(op.id);
   renderNav($("#filter").value);
   renderOperation(op);
+}
+
+/* ---------- sidebar width ---------- */
+
+/* How wide the nav should be is a property of the API, not of the console:
+ * `/v1/deployments/{deployment_id}/pause` needs room that `/health` does not.
+ * So the column is draggable, and where you leave it is where it stays.
+ *
+ * The ceiling follows the window rather than being a fixed number — a sidebar
+ * that can eat the request pane is a sidebar that can hide the request. It is
+ * measured from the laid-out grid, not from `innerWidth`: a console mounted in
+ * a panel or a tab the browser has not shown yet reports a window width of 0,
+ * and clamping against that would open every session at the minimum.
+ */
+function sidebarMax() {
+  const room = $("#layout").clientWidth || window.innerWidth;
+  const rail = $("#rail").getBoundingClientRect().width; // 0 once the rail drops out
+  return room ? Math.max(SIDEBAR_MIN, Math.min(SIDEBAR_CAP, room - rail - MAIN_MIN)) : SIDEBAR_CAP;
+}
+
+const savedSidebarWidth = () => Number(localStorage.getItem(SIDEBAR_KEY)) || 0;
+
+/* `save: false` is the window-resize path: a window too narrow for the chosen
+ * width shows a clamped one, and the preference is left untouched so the sidebar
+ * comes back to it once there is room again. */
+function setSidebarWidth(px, { save = true } = {}) {
+  const width = Math.round(Math.min(Math.max(px, SIDEBAR_MIN), sidebarMax()));
+  $("#layout").style.setProperty("--pd-sidebar", `${width}px`);
+  if (save) localStorage.setItem(SIDEBAR_KEY, String(width));
+  describeHandle();
+}
+
+function describeHandle() {
+  const handle = $("#sidebar-resize");
+  handle.setAttribute("aria-valuenow", Math.round($("#sidebar").getBoundingClientRect().width));
+  handle.setAttribute("aria-valuemin", String(SIDEBAR_MIN));
+  handle.setAttribute("aria-valuemax", String(Math.round(sidebarMax())));
+}
+
+/* Double-click fits the widest row on screen — the same thing the drag is for,
+ * without the aiming. Folded tags are not measured: they are not what you asked
+ * to see. */
+function fitSidebar() {
+  const sidebar = $("#sidebar");
+  sidebar.classList.add("measuring");
+  const wanted = $("#nav").scrollWidth;
+  sidebar.classList.remove("measuring");
+  if (wanted) setSidebarWidth(wanted + 12); // room for the nav's scrollbar
+}
+
+function initSidebar() {
+  const handle = $("#sidebar-resize");
+  const saved = savedSidebarWidth();
+  if (saved) setSidebarWidth(saved, { save: false });
+  else describeHandle();
+
+  /* A width that no longer fits is re-clamped, and one that fits again is
+   * restored. What is watched is the grid's own box rather than the window:
+   * the console can be mounted in a panel, and the first real measurement
+   * often lands after boot — a `resize` listener would sleep through it. */
+  new ResizeObserver(() => {
+    const preferred = savedSidebarWidth();
+    if (preferred) setSidebarWidth(preferred, { save: false });
+    else describeHandle();
+  }).observe($("#layout"));
+
+  handle.addEventListener("pointerdown", (event) => {
+    event.preventDefault();
+    handle.setPointerCapture(event.pointerId);
+    const startX = event.clientX;
+    const startWidth = $("#sidebar").getBoundingClientRect().width;
+    document.body.classList.add("resizing");
+
+    const drag = (move) => setSidebarWidth(startWidth + move.clientX - startX);
+    const stop = () => {
+      handle.removeEventListener("pointermove", drag);
+      document.body.classList.remove("resizing");
+    };
+    handle.addEventListener("pointermove", drag);
+    handle.addEventListener("pointerup", stop, { once: true });
+    handle.addEventListener("pointercancel", stop, { once: true });
+  });
+
+  handle.addEventListener("dblclick", fitSidebar);
+
+  handle.addEventListener("keydown", (event) => {
+    const step = event.shiftKey ? 48 : 16;
+    const width = $("#sidebar").getBoundingClientRect().width;
+    if (event.key === "ArrowLeft") setSidebarWidth(width - step);
+    else if (event.key === "ArrowRight") setSidebarWidth(width + step);
+    else if (event.key === "Enter") fitSidebar();
+    else return;
+    event.preventDefault();
+  });
 }
 
 /* ---------- operation ---------- */
@@ -615,6 +713,7 @@ async function boot() {
     event.target.reset();
   });
 
+  initSidebar();
   restore();
   renderNav();
   renderVariables();

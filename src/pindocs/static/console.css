@@ -129,10 +129,22 @@ body {
   background: transparent;
 }
 
+/* The nav column is a variable so the drag handle has one thing to write to:
+ * paths are as long as they are, and no default width is right for every API. */
 #layout {
+  --pd-sidebar: 288px;
+
   display: grid;
-  grid-template-columns: 288px minmax(0, 1fr) 320px;
+  grid-template-columns: var(--pd-sidebar) minmax(0, 1fr) 320px;
   height: 100vh;
+}
+
+/* While the pointer is captured the cursor belongs to the drag, not to whatever
+ * it happens to pass over, and a stray selection would follow it across the page. */
+body.resizing,
+body.resizing * {
+  cursor: col-resize;
+  user-select: none;
 }
 
 /* ---------- controls ---------- */
@@ -229,11 +241,59 @@ input[type="checkbox"] {
 /* ---------- sidebar ---------- */
 
 #sidebar {
+  position: relative;
   display: flex;
   flex-direction: column;
   min-height: 0;
   border-right: 1px solid var(--pd-line-subtle);
   background: var(--pd-shell);
+}
+
+/* A grab area wider than the line it sits on: 1px is the border's job, hitting
+ * it is the pointer's, and 9px is the difference between the two. */
+#sidebar-resize {
+  position: absolute;
+  top: 0;
+  right: -5px;
+  z-index: 1;
+  width: 9px;
+  height: 100%;
+  cursor: col-resize;
+  touch-action: none;
+}
+
+/* The line the handle covers is redrawn on top of it — the border underneath
+ * belongs to the sidebar, so lighting it up is the only way to show the grab. */
+#sidebar-resize::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 4px;
+  width: 1px;
+  height: 100%;
+  background: transparent;
+  transition: background 120ms ease;
+}
+
+#sidebar-resize:hover::after,
+#sidebar-resize:focus-visible::after,
+body.resizing #sidebar-resize::after {
+  background: var(--pd-primary);
+}
+
+#sidebar-resize:focus-visible {
+  outline: none;
+}
+
+/* Measuring what "fits the full path" means: the rows lay out at their natural
+ * width and stop eliding, so the nav's scrollWidth reports the longest one. */
+#sidebar.measuring .op {
+  width: max-content;
+}
+
+#sidebar.measuring .op .path {
+  overflow: visible;
+  text-overflow: clip;
 }
 
 #sidebar header {
@@ -753,7 +813,9 @@ button.danger:hover {
 
 @media (max-width: 1180px) {
   #layout {
-    grid-template-columns: 256px minmax(0, 1fr);
+    --pd-sidebar: 256px;
+
+    grid-template-columns: var(--pd-sidebar) minmax(0, 1fr);
   }
   #rail {
     display: none;

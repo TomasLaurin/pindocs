@@ -35,6 +35,8 @@ pindocs.mount(
 )
 ```
 
+**Fits the paths you have.** Drag the nav's edge to widen it — `/v1/deployments/{deployment_id}/pause` needs room that `/health` does not — or double-click that edge to fit the longest path on screen. Where you leave it is where it stays.
+
 **Sends real requests.** The console is served *by your app*, so requests are same-origin: no CORS, no proxy, real cookies and headers.
 
 **Remembers values between restarts.** Pin `workspace_id` once and every operation taking one is pre-filled — this run, and next Tuesday. Pinned values live in a plain JSON file (`.pindocs.json`) you can read, commit, or delete.
