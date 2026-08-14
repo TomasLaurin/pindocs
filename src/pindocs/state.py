@@ -24,7 +24,7 @@ import re
 import tempfile
 import threading
 from dataclasses import dataclass, field
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -84,7 +84,7 @@ def _clean_captured(values: Any) -> dict[str, dict[str, str]]:
 
 
 def _now() -> str:
-    return datetime.now(UTC).isoformat(timespec="seconds")
+    return datetime.now(timezone.utc).isoformat(timespec="seconds")
 
 
 def normalise(raw: Any) -> dict[str, Any]:
