@@ -12,7 +12,7 @@ pindocs.mount(app)
 
 Open `http://localhost:8000/pindocs`.
 
-![The console: grouped operations, a request pre-filled from pinned values, and the variables rail](https://raw.githubusercontent.com/TomasLaurin/fastapi_docs/main/docs/screenshot.png)
+![The console: grouped operations, a request pre-filled from pinned values, and the variables rail](https://raw.githubusercontent.com/TomasLaurin/pindocs/main/docs/screenshot.png)
 
 ## Why
 

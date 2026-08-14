@@ -1,7 +1,11 @@
 # Publishes to PyPI on every v* tag, via PyPI trusted publishing — no API token
-# lives in this repository. One-time setup on pypi.org before the first tag:
-# project "pindocs" → add a trusted publisher for TomasLaurin/fastapi_docs,
-# workflow publish.yml, environment pypi (https://docs.pypi.org/trusted-publishers/).
+# lives in this repository. One-time setup on pypi.org before the first tag: the
+# project does not exist yet, so it is a *pending* publisher
+# (pypi.org/manage/account/publishing/), not one added from a project page —
+# owner TomasLaurin, repository pindocs, workflow publish.yml, environment pypi.
+# The repository name is the one GitHub reports today: a rename changes the OIDC
+# claim, and the publisher has to be updated to match or the upload is rejected.
+# https://docs.pypi.org/trusted-publishers/
 name: publish
 
 on:
@@ -13,6 +17,9 @@ jobs:
     runs-on: ubuntu-latest
     environment: pypi
     permissions:
+      # Naming any permission drops every unnamed one to `none`, so `contents:
+      # read` has to be spelled out or checkout cannot read the repository.
+      contents: read
       id-token: write
     steps:
       - uses: actions/checkout@v4
