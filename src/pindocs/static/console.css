@@ -137,9 +137,10 @@ body {
 
 /* ---------- controls ---------- */
 
-input[type="text"],
-input[type="search"],
-input[type="password"],
+/* Match on everything that is not a checkbox rather than listing the text-like
+ * types: `input[type="text"]` misses an input that omits the attribute, and such
+ * an input silently falls back to the white UA default in a dark rail. */
+input:not([type="checkbox"]),
 textarea {
   width: 100%;
   height: 2rem;
