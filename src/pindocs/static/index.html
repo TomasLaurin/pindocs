@@ -32,28 +32,38 @@
       </main>
 
       <aside id="rail">
-        <section>
-          <h2>Authorization</h2>
-          <input id="token" type="password" placeholder="Bearer token" autocomplete="off" spellcheck="false" />
-          <p class="hint">Kept in this browser only — never written to the state file.</p>
-        </section>
+        <div
+          id="rail-resize"
+          role="separator"
+          aria-orientation="vertical"
+          aria-label="Rail width"
+          title="Drag to resize — double-click to reset"
+          tabindex="0"
+        ></div>
+        <div id="rail-scroll">
+          <section>
+            <h2>Authorization</h2>
+            <input id="token" type="password" placeholder="Bearer token" autocomplete="off" spellcheck="false" />
+            <p class="hint">Kept in this browser only — never written to the state file.</p>
+          </section>
 
-        <section>
-          <h2>
-            Variables
-            <label class="toggle" title="Store ids returned by every response">
-              <input id="capture" type="checkbox" />
-              <span>capture</span>
-            </label>
-          </h2>
-          <div id="variables"></div>
-          <form id="add-variable">
-            <input name="name" type="text" placeholder="name" autocomplete="off" spellcheck="false" required />
-            <input name="value" type="text" placeholder="value" autocomplete="off" spellcheck="false" />
-            <button type="submit" title="Pin a variable">Pin</button>
-          </form>
-          <button id="clear-captured" class="ghost">Clear captured</button>
-        </section>
+          <section>
+            <h2>
+              Variables
+              <label class="toggle" title="Store ids returned by every response">
+                <input id="capture" type="checkbox" />
+                <span>capture</span>
+              </label>
+            </h2>
+            <div id="variables"></div>
+            <form id="add-variable">
+              <input name="name" type="text" placeholder="name" autocomplete="off" spellcheck="false" required />
+              <input name="value" type="text" placeholder="value" autocomplete="off" spellcheck="false" />
+              <button type="submit" title="Pin a variable">Pin</button>
+            </form>
+            <button id="clear-captured" class="ghost">Clear captured</button>
+          </section>
+        </div>
       </aside>
     </div>
 

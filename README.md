@@ -35,7 +35,7 @@ pindocs.mount(
 )
 ```
 
-**Fits the paths you have.** Drag the nav's edge to widen it — `/v1/deployments/{deployment_id}/pause` needs room that `/health` does not — or double-click that edge to fit the longest path on screen. Where you leave it is where it stays.
+**Fits the paths you have.** Drag the nav's edge to widen it — `/v1/deployments/{deployment_id}/pause` needs room that `/health` does not — or double-click that edge to fit the longest path on screen. The variables rail drags the same way from its own inner edge, and a double-click there puts it back where it started. Where you leave either column is where it stays, and neither can squeeze the request out of the middle.
 
 **Sends real requests.** The console is served *by your app*, so requests are same-origin: no CORS, no proxy, real cookies and headers.
 

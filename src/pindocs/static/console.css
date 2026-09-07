@@ -129,13 +129,15 @@ body {
   background: transparent;
 }
 
-/* The nav column is a variable so the drag handle has one thing to write to:
- * paths are as long as they are, and no default width is right for every API. */
+/* Both side columns are variables so each drag handle has one thing to write
+ * to: paths are as long as they are, ids are as long as they are, and no
+ * default width is right for every API. */
 #layout {
   --pd-sidebar: 288px;
+  --pd-rail: 320px;
 
   display: grid;
-  grid-template-columns: var(--pd-sidebar) minmax(0, 1fr) 320px;
+  grid-template-columns: var(--pd-sidebar) minmax(0, 1fr) var(--pd-rail);
   height: 100vh;
 }
 
@@ -250,11 +252,13 @@ input[type="checkbox"] {
 }
 
 /* A grab area wider than the line it sits on: 1px is the border's job, hitting
- * it is the pointer's, and 9px is the difference between the two. */
-#sidebar-resize {
+ * it is the pointer's, and 9px is the difference between the two. Each handle
+ * hangs off the inner edge of its own column, so both reach into the request
+ * pane rather than into the content they resize. */
+#sidebar-resize,
+#rail-resize {
   position: absolute;
   top: 0;
-  right: -5px;
   z-index: 1;
   width: 9px;
   height: 100%;
@@ -262,9 +266,18 @@ input[type="checkbox"] {
   touch-action: none;
 }
 
+#sidebar-resize {
+  right: -5px;
+}
+
+#rail-resize {
+  left: -5px;
+}
+
 /* The line the handle covers is redrawn on top of it — the border underneath
- * belongs to the sidebar, so lighting it up is the only way to show the grab. */
-#sidebar-resize::after {
+ * belongs to the column, so lighting it up is the only way to show the grab. */
+#sidebar-resize::after,
+#rail-resize::after {
   content: "";
   position: absolute;
   top: 0;
@@ -277,11 +290,15 @@ input[type="checkbox"] {
 
 #sidebar-resize:hover::after,
 #sidebar-resize:focus-visible::after,
-body.resizing #sidebar-resize::after {
+#rail-resize:hover::after,
+#rail-resize:focus-visible::after,
+body.resizing #sidebar-resize::after,
+body.resizing #rail-resize::after {
   background: var(--pd-primary);
 }
 
-#sidebar-resize:focus-visible {
+#sidebar-resize:focus-visible,
+#rail-resize:focus-visible {
   outline: none;
 }
 
@@ -653,11 +670,22 @@ textarea {
 
 /* ---------- rail ---------- */
 
+/* The handle has to sit still while the rail scrolls under it, so the scrolling
+ * is a child's job and the rail itself is only the column it lives in. */
 #rail {
-  overflow-y: auto;
-  padding: 0.875rem;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
   border-left: 1px solid var(--pd-line-subtle);
   background: var(--pd-shell);
+}
+
+#rail-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 0.875rem;
 }
 
 #rail section {

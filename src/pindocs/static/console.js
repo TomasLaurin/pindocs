@@ -11,10 +11,16 @@ const BASE = window.PINDOCS.base;
 const METHODS = ["get", "post", "put", "patch", "delete", "head", "options"];
 const TOKEN_KEY = `pindocs:token:${BASE}`;
 const COLLAPSED_KEY = `pindocs:collapsed:${BASE}`;
-const SIDEBAR_KEY = `pindocs:sidebar:${BASE}`;
-const SIDEBAR_MIN = 208; // narrower and the method column crowds the path
-const SIDEBAR_CAP = 880;
-const MAIN_MIN = 420; // the request pane's share, however wide the nav gets
+const MAIN_MIN = 420; // the request pane's share, however wide the columns get
+const RAIL_DEFAULT = 320; // what the stylesheet opens with, and what reset returns to
+
+/* The two side columns resize the same way and differ only in these numbers and
+ * in which way the pointer has to travel to widen them: the nav's handle is on
+ * its right edge, the rail's on its left. `edge` is that direction. */
+const COLUMNS = {
+  sidebar: { property: "--pd-sidebar", min: 208, cap: 880, edge: 1 }, // narrower and the method column crowds the path
+  rail: { property: "--pd-rail", min: 240, cap: 640, edge: -1 }, // a name, a value and the Pin button, side by side
+};
 
 /* Tags open by default — a console that greets you with nothing but tag names
  * has hidden the only thing you came for. What you fold away is remembered. */
@@ -288,41 +294,47 @@ function select(op) {
   renderOperation(op);
 }
 
-/* ---------- sidebar width ---------- */
+/* ---------- column widths ---------- */
 
-/* How wide the nav should be is a property of the API, not of the console:
- * `/v1/deployments/{deployment_id}/pause` needs room that `/health` does not.
- * So the column is draggable, and where you leave it is where it stays.
+/* How wide the columns should be is a property of the API, not of the console:
+ * `/v1/deployments/{deployment_id}/pause` needs room that `/health` does not,
+ * and so does a captured `run_id` next to the response it came from. So both
+ * side columns are draggable, and where you leave one is where it stays.
  *
- * The ceiling follows the window rather than being a fixed number — a sidebar
- * that can eat the request pane is a sidebar that can hide the request. It is
- * measured from the laid-out grid, not from `innerWidth`: a console mounted in
- * a panel or a tab the browser has not shown yet reports a window width of 0,
- * and clamping against that would open every session at the minimum.
+ * Each ceiling follows the window rather than being a fixed number — a column
+ * that can eat the request pane is a column that can hide the request. The room
+ * is measured from the laid-out grid, not from `innerWidth`: a console mounted
+ * in a panel or a tab the browser has not shown yet reports a window width of
+ * 0, and clamping against that would open every session at the minimum.
  */
-function sidebarMax() {
-  const room = $("#layout").clientWidth || window.innerWidth;
-  const rail = $("#rail").getBoundingClientRect().width; // 0 once the rail drops out
-  return room ? Math.max(SIDEBAR_MIN, Math.min(SIDEBAR_CAP, room - rail - MAIN_MIN)) : SIDEBAR_CAP;
-}
+const OTHER = { sidebar: "rail", rail: "sidebar" };
 
-const savedSidebarWidth = () => Number(localStorage.getItem(SIDEBAR_KEY)) || 0;
+const widthKey = (name) => `pindocs:${name}:${BASE}`;
+const savedWidth = (name) => Number(localStorage.getItem(widthKey(name))) || 0;
+const columnWidth = (name) => $(`#${name}`).getBoundingClientRect().width;
+
+function columnMax(name) {
+  const { min, cap } = COLUMNS[name];
+  const room = $("#layout").clientWidth || window.innerWidth;
+  const other = columnWidth(OTHER[name]); // 0 once the rail drops out of the layout
+  return room ? Math.max(min, Math.min(cap, room - other - MAIN_MIN)) : cap;
+}
 
 /* `save: false` is the window-resize path: a window too narrow for the chosen
- * width shows a clamped one, and the preference is left untouched so the sidebar
+ * width shows a clamped one, and the preference is left untouched so the column
  * comes back to it once there is room again. */
-function setSidebarWidth(px, { save = true } = {}) {
-  const width = Math.round(Math.min(Math.max(px, SIDEBAR_MIN), sidebarMax()));
-  $("#layout").style.setProperty("--pd-sidebar", `${width}px`);
-  if (save) localStorage.setItem(SIDEBAR_KEY, String(width));
-  describeHandle();
+function setColumnWidth(name, px, { save = true } = {}) {
+  const width = Math.round(Math.min(Math.max(px, COLUMNS[name].min), columnMax(name)));
+  $("#layout").style.setProperty(COLUMNS[name].property, `${width}px`);
+  if (save) localStorage.setItem(widthKey(name), String(width));
+  describeHandle(name);
 }
 
-function describeHandle() {
-  const handle = $("#sidebar-resize");
-  handle.setAttribute("aria-valuenow", Math.round($("#sidebar").getBoundingClientRect().width));
-  handle.setAttribute("aria-valuemin", String(SIDEBAR_MIN));
-  handle.setAttribute("aria-valuemax", String(Math.round(sidebarMax())));
+function describeHandle(name) {
+  const handle = $(`#${name}-resize`);
+  handle.setAttribute("aria-valuenow", String(Math.round(columnWidth(name))));
+  handle.setAttribute("aria-valuemin", String(COLUMNS[name].min));
+  handle.setAttribute("aria-valuemax", String(Math.round(columnMax(name))));
 }
 
 /* Double-click fits the widest row on screen — the same thing the drag is for,
@@ -333,33 +345,29 @@ function fitSidebar() {
   sidebar.classList.add("measuring");
   const wanted = $("#nav").scrollWidth;
   sidebar.classList.remove("measuring");
-  if (wanted) setSidebarWidth(wanted + 12); // room for the nav's scrollbar
+  if (wanted) setColumnWidth("sidebar", wanted + 12); // room for the nav's scrollbar
 }
 
-function initSidebar() {
-  const handle = $("#sidebar-resize");
-  const saved = savedSidebarWidth();
-  if (saved) setSidebarWidth(saved, { save: false });
-  else describeHandle();
+/* The rail holds inputs, which are as wide as you make them — there is no
+ * longest row to fit, so its double-click puts the column back where it started. */
+const resetRail = () => setColumnWidth("rail", RAIL_DEFAULT);
 
-  /* A width that no longer fits is re-clamped, and one that fits again is
-   * restored. What is watched is the grid's own box rather than the window:
-   * the console can be mounted in a panel, and the first real measurement
-   * often lands after boot — a `resize` listener would sleep through it. */
-  new ResizeObserver(() => {
-    const preferred = savedSidebarWidth();
-    if (preferred) setSidebarWidth(preferred, { save: false });
-    else describeHandle();
-  }).observe($("#layout"));
+function initColumn(name) {
+  const handle = $(`#${name}-resize`);
+  const { edge } = COLUMNS[name];
+  const snap = name === "sidebar" ? fitSidebar : resetRail;
+  const saved = savedWidth(name);
+  if (saved) setColumnWidth(name, saved, { save: false });
+  else describeHandle(name);
 
   handle.addEventListener("pointerdown", (event) => {
     event.preventDefault();
     handle.setPointerCapture(event.pointerId);
     const startX = event.clientX;
-    const startWidth = $("#sidebar").getBoundingClientRect().width;
+    const startWidth = columnWidth(name);
     document.body.classList.add("resizing");
 
-    const drag = (move) => setSidebarWidth(startWidth + move.clientX - startX);
+    const drag = (move) => setColumnWidth(name, startWidth + edge * (move.clientX - startX));
     const stop = () => {
       handle.removeEventListener("pointermove", drag);
       document.body.classList.remove("resizing");
@@ -369,17 +377,38 @@ function initSidebar() {
     handle.addEventListener("pointercancel", stop, { once: true });
   });
 
-  handle.addEventListener("dblclick", fitSidebar);
+  handle.addEventListener("dblclick", snap);
 
+  /* The arrow keys move the separator, not the column: left is left, whichever
+   * side of the window it is on, and one of the two directions widens. */
   handle.addEventListener("keydown", (event) => {
-    const step = event.shiftKey ? 48 : 16;
-    const width = $("#sidebar").getBoundingClientRect().width;
-    if (event.key === "ArrowLeft") setSidebarWidth(width - step);
-    else if (event.key === "ArrowRight") setSidebarWidth(width + step);
-    else if (event.key === "Enter") fitSidebar();
+    const step = (event.shiftKey ? 48 : 16) * edge;
+    const width = columnWidth(name);
+    if (event.key === "ArrowLeft") setColumnWidth(name, width - step);
+    else if (event.key === "ArrowRight") setColumnWidth(name, width + step);
+    else if (event.key === "Enter") snap();
     else return;
     event.preventDefault();
   });
+}
+
+function initColumns() {
+  /* The rail first: the nav's ceiling is measured against whatever the rail
+   * ended up at, so restoring it second is restoring it against the truth. */
+  initColumn("rail");
+  initColumn("sidebar");
+
+  /* A width that no longer fits is re-clamped, and one that fits again is
+   * restored. What is watched is the grid's own box rather than the window:
+   * the console can be mounted in a panel, and the first real measurement
+   * often lands after boot — a `resize` listener would sleep through it. */
+  new ResizeObserver(() => {
+    for (const name of ["rail", "sidebar"]) {
+      const preferred = savedWidth(name);
+      if (preferred) setColumnWidth(name, preferred, { save: false });
+      else describeHandle(name);
+    }
+  }).observe($("#layout"));
 }
 
 /* ---------- operation ---------- */
@@ -713,7 +742,7 @@ async function boot() {
     event.target.reset();
   });
 
-  initSidebar();
+  initColumns();
   restore();
   renderNav();
   renderVariables();
