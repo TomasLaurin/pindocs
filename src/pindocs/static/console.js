@@ -206,15 +206,40 @@ function resolve(name, schema = {}) {
   return { value: "", source: "" };
 }
 
-async function saveState(next) {
-  const response = await fetch(`${BASE}/state`, {
-    method: "PUT",
-    headers: { "content-type": "application/json" },
-    body: JSON.stringify(next),
+/* Every write to the state file queues here, and only one is ever in flight.
+ *
+ * The file is written whole, so two overlapping writes are a lost value: each
+ * builds its document from the `STATE` it can see, and the second to land is a
+ * document that never heard of the first. Pin five variables in the time one
+ * round trip takes and four of them are gone. Queuing is what makes them add
+ * up — a write starts from the state the write before it returned. */
+let WRITES = Promise.resolve();
+
+function queueWrite(write) {
+  const done = WRITES.then(write);
+  // The queue itself must never carry a rejection forward, or one failed write
+  // would wedge every write behind it for the life of the page.
+  WRITES = done.then(
+    () => {},
+    () => {},
+  );
+  return done;
+}
+
+/* `mutate` is handed the state as it stands when its turn comes — not the one
+ * on screen when the button was clicked — and returns the document to write.
+ * What comes back from the server is still what gets rendered. */
+function saveState(mutate) {
+  return queueWrite(async () => {
+    const response = await fetch(`${BASE}/state`, {
+      method: "PUT",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(mutate(STATE)),
+    });
+    STATE = await response.json();
+    renderVariables();
+    if (CURRENT) renderOperation(CURRENT);
   });
-  STATE = await response.json();
-  renderVariables();
-  if (CURRENT) renderOperation(CURRENT);
 }
 
 /* ---------- sidebar ---------- */
@@ -558,20 +583,25 @@ async function send(op, inputs, bodyEditor, button, timing, slot) {
   }
 }
 
-async function capture(op, parsed) {
-  if (!STATE.capture) return [];
-  const before = { ...STATE.captured };
-  const response = await fetch(`${BASE}/capture`, {
-    method: "POST",
-    headers: { "content-type": "application/json" },
-    body: JSON.stringify({ operation: op.id, path: op.path, body: parsed }),
-  });
-  STATE = await response.json();
-  renderVariables();
+/* Folding a response in is a write like any other, so it queues with the rest:
+ * a pin landing mid-flight would otherwise be written back out by whichever of
+ * the two finished second. */
+function capture(op, parsed) {
+  return queueWrite(async () => {
+    if (!STATE.capture) return [];
+    const before = { ...STATE.captured };
+    const response = await fetch(`${BASE}/capture`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ operation: op.id, path: op.path, body: parsed }),
+    });
+    STATE = await response.json();
+    renderVariables();
 
-  return Object.entries(STATE.captured)
-    .filter(([name, entry]) => before[name]?.value !== entry.value)
-    .map(([name, entry]) => `${name} = ${entry.value}`);
+    return Object.entries(STATE.captured)
+      .filter(([name, entry]) => before[name]?.value !== entry.value)
+      .map(([name, entry]) => `${name} = ${entry.value}`);
+  });
 }
 
 function renderResponse(response, text, parsed, elapsed, captured) {
@@ -633,9 +663,11 @@ function renderVariables() {
 function variableRow(name, value, kind, origin) {
   const input = el("input", { class: "value", type: "text", value });
 
+  /* The edited text is read here rather than inside the mutator: a write that
+   * waits its turn should still record what was typed when it was committed. */
   input.addEventListener("change", () => {
-    const next = { ...STATE, pinned: { ...STATE.pinned, [name]: input.value } };
-    saveState(next);
+    const edited = input.value;
+    saveState((state) => ({ ...state, pinned: { ...state.pinned, [name]: edited } }));
   });
 
   /* A pinned row needs one action — unpin already means "forget this". A
@@ -649,11 +681,12 @@ function variableRow(name, value, kind, origin) {
             type: "button",
             text: "unpin",
             title: "Stop overriding this name",
-            onclick: () => {
-              const pinnedNext = { ...STATE.pinned };
-              delete pinnedNext[name];
-              saveState({ ...STATE, pinned: pinnedNext });
-            },
+            onclick: () =>
+              saveState((state) => {
+                const pinned = { ...state.pinned };
+                delete pinned[name];
+                return { ...state, pinned };
+              }),
           }),
         ]
       : [
@@ -662,18 +695,19 @@ function variableRow(name, value, kind, origin) {
             type: "button",
             text: "pin",
             title: "Keep this value — responses will stop overwriting it",
-            onclick: () => saveState({ ...STATE, pinned: { ...STATE.pinned, [name]: value } }),
+            onclick: () => saveState((state) => ({ ...state, pinned: { ...state.pinned, [name]: value } })),
           }),
           el("button", {
             class: "pin drop",
             type: "button",
             text: "✕",
             title: "Delete this captured value",
-            onclick: () => {
-              const capturedNext = { ...STATE.captured };
-              delete capturedNext[name];
-              saveState({ ...STATE, captured: capturedNext });
-            },
+            onclick: () =>
+              saveState((state) => {
+                const captured = { ...state.captured };
+                delete captured[name];
+                return { ...state, captured };
+              }),
           }),
         ];
 
@@ -725,20 +759,26 @@ async function boot() {
   $("#token").value = localStorage.getItem(TOKEN_KEY) || "";
   $("#token").addEventListener("change", (event) => localStorage.setItem(TOKEN_KEY, event.target.value));
   $("#filter").addEventListener("input", (event) => renderNav(event.target.value));
-  $("#capture").addEventListener("change", (event) => saveState({ ...STATE, capture: event.target.checked }));
+  $("#capture").addEventListener("change", (event) => {
+    const wanted = event.target.checked;
+    saveState((state) => ({ ...state, capture: wanted }));
+  });
   $("#clear-captured").addEventListener("click", async () => {
     const count = Object.keys(STATE.captured).length;
     if (!count) return;
     const what = count === 1 ? "the 1 captured value" : `all ${count} captured values`;
     if (await confirmDialog(`Delete ${what}? Pinned values stay.`)) {
-      saveState({ ...STATE, captured: {} });
+      saveState((state) => ({ ...state, captured: {} }));
     }
   });
   $("#add-variable").addEventListener("submit", (event) => {
     event.preventDefault();
     const form = new FormData(event.target);
     const name = String(form.get("name")).trim();
-    if (name) saveState({ ...STATE, pinned: { ...STATE.pinned, [name]: String(form.get("value")) } });
+    if (name) {
+      const value = String(form.get("value"));
+      saveState((state) => ({ ...state, pinned: { ...state.pinned, [name]: value } }));
+    }
     event.target.reset();
   });
 
